@@ -2,22 +2,35 @@
   "github_url": "https://github.com/Traia-IO/binance-data-mcp-server",
   "mcp_server": {
     "name": "binance-data-mcp",
-    "description": "Binance public market data (klines, depth, 24hr ticker).",
+    "description": "Free MCP server exposing public Binance spot market data, Binance Web3 (Pulse/wallet-direct) rankings & signals, and technical-analysis indicators. Replaces 12 legacy script-based skills. No API key required.",
     "server_type": "streamable-http",
     "requires_api_key": false,
     "capabilities": [
       "binance_klines",
-      "binance_depth",
-      "binance_ticker_24hr"
+      "binance_orderbook",
+      "binance_whale_activity",
+      "binance_pnl_leaderboard",
+      "binance_smart_money_inflows",
+      "binance_meme_rank",
+      "binance_meme_rush",
+      "binance_social_hype",
+      "binance_token_rank",
+      "binance_topic_rush",
+      "binance_trading_signal",
+      "binance_rsi_signal",
+      "binance_technical_analysis",
+      "binance_trend_momentum_entry"
     ]
   },
   "deployment_method": "cloud_run",
   "gcp_project_id": "traia-mcp-servers",
   "gcp_region": "us-central1",
   "tags": [
-    "binance-data",
-    "api",
-    "mcp"
+    "binance",
+    "market-data",
+    "web3",
+    "technical-analysis",
+    "free"
   ],
   "ref": "main"
 }
