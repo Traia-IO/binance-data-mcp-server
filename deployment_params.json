@@ -1,0 +1,23 @@
+{
+  "github_url": "https://github.com/Traia-IO/binance-data-mcp-server",
+  "mcp_server": {
+    "name": "binance-data-mcp",
+    "description": "Binance public market data (klines, depth, 24hr ticker).",
+    "server_type": "streamable-http",
+    "requires_api_key": false,
+    "capabilities": [
+      "binance_klines",
+      "binance_depth",
+      "binance_ticker_24hr"
+    ]
+  },
+  "deployment_method": "cloud_run",
+  "gcp_project_id": "traia-mcp-servers",
+  "gcp_region": "us-central1",
+  "tags": [
+    "binance-data",
+    "api",
+    "mcp"
+  ],
+  "ref": "main"
+}
