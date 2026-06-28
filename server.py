@@ -829,6 +829,57 @@ async def binance_trend_momentum_entry(context: Context, symbol: str = "BTCUSDT"
 # END_CUSTOM_TOOLS
 
 
+# ── Plain-REST face (reliable agent routing) ────────────────────────────────
+# The MCP session handshake (initialize -> mcp-session-id -> tools/call over SSE)
+# is unreliable to drive from an agent's generic http_fetch tool, so we ALSO
+# expose every tool as a simple `POST /v1/binance/<tool>` with a JSON arg body —
+# the same pattern that makes the talib-signals-backed skills reliable. The tool
+# bodies don't use `context` (it's only accepted for the MCP/payment wrapper),
+# and @require_payment_for_tool is metadata-only, so the functions are directly
+# callable with context=None.
+_REST_TOOLS = {
+    "binance_klines": binance_klines,
+    "binance_orderbook": binance_orderbook,
+    "binance_whale_activity": binance_whale_activity,
+    "binance_pnl_leaderboard": binance_pnl_leaderboard,
+    "binance_smart_money_inflows": binance_smart_money_inflows,
+    "binance_meme_rank": binance_meme_rank,
+    "binance_meme_rush": binance_meme_rush,
+    "binance_social_hype": binance_social_hype,
+    "binance_token_rank": binance_token_rank,
+    "binance_topic_rush": binance_topic_rush,
+    "binance_trading_signal": binance_trading_signal,
+    "binance_rsi_signal": binance_rsi_signal,
+    "binance_technical_analysis": binance_technical_analysis,
+    "binance_trend_momentum_entry": binance_trend_momentum_entry,
+}
+
+
+async def _rest_dispatch(request: Request) -> JSONResponse:
+    """POST /v1/binance/<tool> with a JSON body of the tool's args. Free; no MCP session."""
+    tool = request.path_params.get("tool", "")
+    fn = _REST_TOOLS.get(tool)
+    if fn is None:
+        return JSONResponse(
+            {"error": f"unknown tool '{tool}'", "available": sorted(_REST_TOOLS)},
+            status_code=404,
+        )
+    try:
+        body = await request.json()
+        if not isinstance(body, dict):
+            body = {}
+    except Exception:
+        body = {}
+    try:
+        result = await fn(context=None, **body)
+        return JSONResponse(result)
+    except TypeError as e:
+        return JSONResponse({"error": f"bad request params: {e}"}, status_code=400)
+    except Exception as e:  # upstream/runtime failure
+        logger.exception("REST dispatch failed for tool %s", tool)
+        return JSONResponse({"error": str(e)}, status_code=502)
+
+
 # ============================================================================
 # APPLICATION SETUP WITH STARLETTE MIDDLEWARE
 # ============================================================================
@@ -882,6 +933,10 @@ def create_app_with_middleware():
         })
     app.router.routes.append(Route("/health", health_check, methods=["GET"]))
     logger.info("✅ Added /health endpoint")
+
+    # Plain-REST face for reliable agent routing (parallel to /mcp).
+    app.router.routes.append(Route("/v1/binance/{tool}", _rest_dispatch, methods=["POST"]))
+    logger.info("✅ Added /v1/binance/{tool} REST routes (%d tools)", len(_REST_TOOLS))
 
     return app
 
